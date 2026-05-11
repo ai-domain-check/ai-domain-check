@@ -17,6 +17,7 @@ import type {
 
 const ISSUE_URL_BASE =
   'https://github.com/ai-domain-check/ai-domain-check-list/issues/new';
+const REPORT_TEMPLATE = 'domain-report.yml';
 
 const STATUS_LABELS: Record<DomainStatus | 'unsupported', string> = {
   official: '공식',
@@ -24,6 +25,10 @@ const STATUS_LABELS: Record<DomainStatus | 'unsupported', string> = {
   suspicious: '사칭 의심',
   unsupported: '확인 불가',
 };
+
+// 현재 활성 탭의 URL을 신고 폼에 prefill하기 위해 module-level에 보관.
+// popup은 닫히면 인스턴스가 사라지므로 stale 위험 없음.
+let currentTabUrl = '';
 
 document.addEventListener('DOMContentLoaded', () => {
   void init();
@@ -39,6 +44,7 @@ async function init(): Promise<void> {
   });
 
   const url = tab?.url ?? '';
+  currentTabUrl = url;
   if (!url || /^(chrome|edge|about|chrome-extension|view-source|file):/i.test(url)) {
     renderUnsupported('확장프로그램이 동작할 수 있는 일반 웹페이지가 아닙니다.');
     return;
@@ -91,7 +97,7 @@ function buildBodyFor(result: StatusResult): HTMLElement[] {
   if (result.status === 'official' && isWhitelist(result.matchedEntry)) {
     const entry = result.matchedEntry;
     const rows: HTMLElement[] = [makeRow('운영 주체', entry.publisher)];
-    if (entry.category) rows.push(makeRow('카테고리', entry.category));
+    if (entry.category) rows.push(makeChipRow('카테고리', entry.category));
     const evidence = makeEvidenceRow(entry.evidence);
     if (evidence) rows.push(evidence);
     return rows;
@@ -99,7 +105,7 @@ function buildBodyFor(result: StatusResult): HTMLElement[] {
 
   if (result.status === 'suspicious' && isBlacklist(result.matchedEntry)) {
     const entry = result.matchedEntry;
-    const rows: HTMLElement[] = [makeRow('사유', entry.reasonCode)];
+    const rows: HTMLElement[] = [makeChipRow('사유', entry.reasonCode)];
     if (entry.impersonates) rows.push(makeRow('사칭 대상', entry.impersonates));
     const evidence = makeEvidenceRow(entry.evidence);
     if (evidence) rows.push(evidence);
@@ -188,6 +194,27 @@ function makeRow(label: string, value: string): HTMLElement {
   return row;
 }
 
+// 카테고리·reasonCode처럼 enum 값을 깔끔하게 chip으로 표시.
+function makeChipRow(label: string, value: string): HTMLElement {
+  const row = document.createElement('div');
+  row.className = 'row';
+
+  const lab = document.createElement('div');
+  lab.className = 'row-label';
+  lab.textContent = label;
+
+  const val = document.createElement('div');
+  val.className = 'row-value';
+
+  const chip = document.createElement('span');
+  chip.className = 'chip';
+  chip.textContent = value;
+  val.appendChild(chip);
+
+  row.append(lab, val);
+  return row;
+}
+
 function makeEvidenceRow(urls: string[] | undefined): HTMLElement | null {
   const safe = (urls ?? []).filter(isHttpUrl);
   if (safe.length === 0) return null;
@@ -230,21 +257,28 @@ function attachReportButton(hostname: string, status: DomainStatus): void {
   btn.disabled = false;
   btn.title = '사칭 의심 신고 Issue 생성';
   btn.onclick = () => {
-    const title = encodeURIComponent(`[report] ${hostname} (${status})`);
-    const body = encodeURIComponent(
-      [
-        '## 사칭 의심 신고',
-        '',
-        `- 도메인: ${hostname}`,
-        `- 현재 상태: ${status}`,
-        '- 어떻게 발견했는지(검색, 광고, 메일 등):',
-        '- 스크린샷 또는 증거 링크:',
-        '',
-      ].join('\n'),
-    );
-    const url = `${ISSUE_URL_BASE}?title=${title}&body=${body}`;
+    const url = buildReportUrl(hostname);
     void chrome.tabs.create({ url });
   };
+}
+
+// GitHub Issue Template URL을 생성. domain 필드를 현재 탭의 전체 URL(경로 포함)로 prefill.
+// 사용자가 직접 폼을 작성하기 전에 도메인이 미리 채워져 있어 정확한 신고가 됩니다.
+function buildReportUrl(hostname: string): string {
+  let domainValue = hostname;
+  try {
+    // 현재 탭 URL이 유효하면 경로 포함 형태로 — query/hash는 제거(추적 파라미터·민감정보 우려)
+    const u = new URL(currentTabUrl);
+    domainValue = `${u.protocol}//${u.host}${u.pathname}`;
+  } catch {
+    /* hostname-only로 fallback */
+  }
+
+  const params = new URLSearchParams({
+    template: REPORT_TEMPLATE,
+    domain: domainValue,
+  });
+  return `${ISSUE_URL_BASE}?${params.toString()}`;
 }
 
 function disableReport(): void {
