@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "AI Domain Check",
+  "version": "0.0.1",
+  "description": "AI 도구 사이트의 공식/미확인/사칭 의심 여부를 즉시 표시하는 크롬 확장프로그램입니다.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://raw.githubusercontent.com/ai-domain-check/ai-domain-check-list/*"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "ai-domain-check",
+  "version": "0.0.1",
+  "private": true,
+  "description": "AI 도구 사이트의 공식/미확인/사칭 의심 여부를 표시하는 크롬 확장프로그램",
+  "scripts": {
+    "build": "esbuild src/background/service-worker.ts src/content/content.ts src/popup/popup.ts --bundle --outdir=dist --platform=browser --target=chrome120 --format=iife",
+    "watch": "npm run build -- --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.260",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0"
+  }
+}
