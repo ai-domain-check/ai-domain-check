@@ -38,6 +38,13 @@ export type BlacklistEntry = {
   domain: string;
   reasonCode: BlacklistReasonCode;
   impersonates?: string;
+  // 같은 캠페인 운영자가 여러 서브도메인을 동시 운영하는 경우 true.
+  // 기본 false — 명시적으로 허용해야만 *.domain.com이 잡힘.
+  allowSubdomains?: boolean;
+  // UGC 호스팅 위의 사칭 콘텐츠를 좁혀서 차단할 때 사용 (예: sites.google.com/view/xxx).
+  // 미지정/빈 배열이면 hostname 단위 차단(도메인 전체 사칭으로 간주).
+  // 정상 사용자 콘텐츠까지 사칭으로 잘못 잡지 않으려면 UGC 플랫폼에 반드시 paths를 지정.
+  paths?: string[];
   evidence: string[];
   addedAt: string;
   addedBy?: string;
