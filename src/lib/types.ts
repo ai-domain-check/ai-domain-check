@@ -60,6 +60,7 @@ export type CheckDomainMessage = {
   type: 'check-domain';
   hostname: string;
   pathname?: string; // 경로 기반 매칭이 필요한 엔트리(예: github.com)를 위해 함께 전송
+  isReload?: boolean; // 사용자가 페이지를 reload한 경우 true — 동기 refresh 트리거
 };
 
 export type ForceRefreshMessage = {

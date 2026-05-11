@@ -2,7 +2,8 @@
 //
 // chrome.action.setIcon은 PNG 파일 경로 또는 ImageData를 받습니다.
 // MVP 단계에서는 PNG 디자인 자산이 없으므로 OffscreenCanvas로
-// 상태별 색상 원을 즉석에서 그려 ImageData로 넘깁니다.
+// 상태별 색상 원 + 의미 심볼(체크/느낌표/물음표)을 즉석에서 그려 ImageData로 넘깁니다.
+// 색맹 사용자나 흑백 환경에서도 모양으로 의미가 전달되도록 색 + 심볼 이중 표현.
 // 추후 디자인된 PNG가 도착하면 이 모듈을 PNG 로딩 방식으로 교체.
 
 import type { DomainStatus } from '../lib/types';
@@ -10,10 +11,10 @@ import type { DomainStatus } from '../lib/types';
 export type IconStatus = DomainStatus | 'unsupported';
 
 const ICON_COLORS: Record<IconStatus, string> = {
-  official: '#10b981',
-  suspicious: '#ef4444',
-  unverified: '#f59e0b',
-  unsupported: '#9ca3af',
+  official: '#059669',
+  suspicious: '#dc2626',
+  unverified: '#d97706',
+  unsupported: '#94a3b8',
 };
 
 // Chrome의 toolbar 아이콘은 16/32 위주로 표시되지만,
@@ -25,9 +26,8 @@ export async function setIconForTab(
   status: IconStatus,
 ): Promise<void> {
   const imageData: Record<number, ImageData> = {};
-  const color = ICON_COLORS[status];
   for (const size of ICON_SIZES) {
-    imageData[size] = drawStatusIcon(size, color);
+    imageData[size] = drawStatusIcon(size, status);
   }
 
   try {
@@ -38,7 +38,7 @@ export async function setIconForTab(
   }
 }
 
-function drawStatusIcon(size: number, color: string): ImageData {
+function drawStatusIcon(size: number, status: IconStatus): ImageData {
   const canvas = new OffscreenCanvas(size, size);
   const ctx = canvas.getContext('2d');
   if (!ctx) {
@@ -49,20 +49,95 @@ function drawStatusIcon(size: number, color: string): ImageData {
 
   const cx = size / 2;
   const cy = size / 2;
-  const r = size * 0.42;
+  const r = size * 0.44;
 
-  // 채워진 원
-  ctx.fillStyle = color;
+  // 채워진 원 (상태 색상)
+  ctx.fillStyle = ICON_COLORS[status];
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.fill();
 
-  // 흰색 테두리로 가독성 강화 (다크 모드 툴바에서도 또렷하게)
-  ctx.lineWidth = Math.max(1, Math.floor(size * 0.08));
+  // 흰색 심볼 (의미 강화 — 색맹·흑백 환경 대응)
   ctx.strokeStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.stroke();
+  ctx.fillStyle = '#ffffff';
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  switch (status) {
+    case 'official':
+      drawCheck(ctx, cx, cy, r);
+      break;
+    case 'suspicious':
+      drawExclamation(ctx, cx, cy, r);
+      break;
+    case 'unverified':
+      drawQuestion(ctx, cx, cy, r);
+      break;
+    case 'unsupported':
+      // 회색 원만 — 추가 심볼 없음
+      break;
+  }
 
   return ctx.getImageData(0, 0, size, size);
+}
+
+// 체크 마크 — 공식 도메인용
+function drawCheck(
+  ctx: OffscreenCanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  r: number,
+): void {
+  const w = Math.max(1.5, r * 0.20);
+  ctx.lineWidth = w;
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.42, cy + r * 0.04);
+  ctx.lineTo(cx - r * 0.08, cy + r * 0.36);
+  ctx.lineTo(cx + r * 0.48, cy - r * 0.28);
+  ctx.stroke();
+}
+
+// 느낌표 — 사칭 의심용
+function drawExclamation(
+  ctx: OffscreenCanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  r: number,
+): void {
+  const w = Math.max(1.5, r * 0.22);
+  ctx.lineWidth = w;
+  // 수직선
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - r * 0.50);
+  ctx.lineTo(cx, cy + r * 0.10);
+  ctx.stroke();
+  // 아래쪽 점
+  ctx.beginPath();
+  ctx.arc(cx, cy + r * 0.45, w * 0.55, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// 물음표 — 미확인용
+function drawQuestion(
+  ctx: OffscreenCanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  r: number,
+): void {
+  // 16px 같은 작은 크기에서는 텍스트 렌더링이 흐려지므로 경로로 그림
+  const w = Math.max(1.5, r * 0.20);
+  ctx.lineWidth = w;
+  // 위쪽 곡선부 (반원)
+  ctx.beginPath();
+  ctx.arc(cx, cy - r * 0.18, r * 0.30, Math.PI, Math.PI * 1.85, false);
+  ctx.stroke();
+  // 곡선 끝에서 중앙으로 내려오는 선
+  ctx.beginPath();
+  ctx.moveTo(cx + r * 0.20, cy + r * 0.02);
+  ctx.lineTo(cx, cy + r * 0.20);
+  ctx.stroke();
+  // 아래쪽 점
+  ctx.beginPath();
+  ctx.arc(cx, cy + r * 0.50, w * 0.55, 0, Math.PI * 2);
+  ctx.fill();
 }

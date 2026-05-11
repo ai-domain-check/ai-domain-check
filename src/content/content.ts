@@ -32,28 +32,32 @@ const BADGE_STYLES = `
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
+    padding: 7px 13px 7px 11px;
     border-radius: 999px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: 0.01em;
     line-height: 1;
     color: #ffffff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    box-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.08),
+      0 4px 12px rgba(15, 23, 42, 0.12);
     user-select: none;
     cursor: default;
+    backdrop-filter: saturate(1.1);
   }
   .dot {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     background: #ffffff;
     display: inline-block;
-    opacity: 0.95;
+    opacity: 0.9;
   }
-  .badge-official { background: #10b981; }
-  .badge-suspicious { background: #ef4444; }
-  .badge-unverified { background: #f59e0b; }
+  .badge-official { background: #059669; }
+  .badge-suspicious { background: #dc2626; }
+  .badge-unverified { background: #d97706; }
 `;
 
 // 탑 프레임에서만 실행. iframe 내부에서는 스킵.
@@ -71,6 +75,7 @@ async function init(): Promise<void> {
     type: 'check-domain',
     hostname,
     pathname: window.location.pathname,
+    isReload: isPageReload(),
   };
 
   let result: StatusResult | null = null;
@@ -151,4 +156,17 @@ function isBlacklistEntry(
   entry: WhitelistEntry | BlacklistEntry | undefined,
 ): entry is BlacklistEntry {
   return !!entry && 'reasonCode' in entry;
+}
+
+// 이번 페이지 로드가 reload였는지(Cmd+R, F5, brower reload 버튼) 첫 방문이었는지 판단.
+// 사용자가 reload를 했다면 "데이터를 새로 받아오라"는 명시적 신호로 해석.
+function isPageReload(): boolean {
+  try {
+    const entries = performance.getEntriesByType(
+      'navigation',
+    ) as PerformanceNavigationTiming[];
+    return entries[0]?.type === 'reload';
+  } catch {
+    return false;
+  }
 }

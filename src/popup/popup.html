@@ -4,49 +4,87 @@
   <meta charset="utf-8">
   <title>AI Domain Check</title>
   <style>
+    :root {
+      --color-bg: #ffffff;
+      --color-surface: #f8fafc;
+      --color-border: #e2e8f0;
+      --color-border-soft: #f1f5f9;
+      --color-text: #0f172a;
+      --color-text-muted: #64748b;
+      --color-text-faint: #94a3b8;
+      --color-link: #2563eb;
+      --color-link-hover: #1d4ed8;
+      --color-official: #059669;
+      --color-suspicious: #dc2626;
+      --color-unverified: #d97706;
+      --color-unsupported: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      width: 320px;
+      width: 340px;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
       font-size: 13px;
-      color: #1f2937;
-      background: #ffffff;
+      color: var(--color-text);
+      background: var(--color-bg);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
+
     .header {
-      padding: 14px 16px 12px;
-      border-bottom: 1px solid #e5e7eb;
+      padding: 16px 16px 14px;
+      border-bottom: 1px solid var(--color-border-soft);
     }
+
     .status {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
+      gap: 5px;
+      padding: 3px 10px 3px 8px;
       border-radius: 999px;
       font-size: 11px;
-      font-weight: 600;
-      color: #ffffff;
+      font-weight: 700;
       letter-spacing: 0.02em;
+      color: #ffffff;
+      line-height: 1.4;
     }
-    .status.official { background: #10b981; }
-    .status.suspicious { background: #ef4444; }
-    .status.unverified { background: #f59e0b; }
-    .status.unsupported { background: #9ca3af; }
+    .status::before {
+      content: '';
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.85;
+    }
+    .status.official { background: var(--color-official); }
+    .status.suspicious { background: var(--color-suspicious); }
+    .status.unverified { background: var(--color-unverified); }
+    .status.unsupported { background: var(--color-unsupported); }
+
     .hostname {
-      margin-top: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #111827;
+      margin-top: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--color-text);
       word-break: break-all;
+      line-height: 1.35;
+      letter-spacing: -0.005em;
     }
+
     .body {
-      padding: 14px 16px;
+      padding: 14px 16px 4px;
     }
     .body:empty {
       display: none;
     }
     .row {
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .row:last-child {
       margin-bottom: 0;
@@ -54,30 +92,69 @@
     .row-label {
       font-size: 10px;
       font-weight: 700;
-      color: #6b7280;
+      color: var(--color-text-faint);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 3px;
+      letter-spacing: 0.07em;
+      margin-bottom: 4px;
     }
     .row-value {
-      color: #111827;
-      line-height: 1.45;
+      color: var(--color-text);
+      line-height: 1.5;
+      font-size: 13px;
+    }
+
+    .chip {
+      display: inline-block;
+      padding: 2px 8px;
+      background: var(--color-surface);
+      color: var(--color-text-muted);
+      border: 1px solid var(--color-border);
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      line-height: 1.5;
+    }
+
+    .evidence {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
     .evidence a {
-      display: block;
-      color: #2563eb;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      color: var(--color-link);
       text-decoration: none;
-      margin-bottom: 3px;
-      word-break: break-all;
       font-size: 12px;
+      line-height: 1.45;
+      word-break: break-all;
+      padding: 4px 6px;
+      margin: 0 -6px;
+      border-radius: 4px;
+      transition: background 0.1s ease;
+    }
+    .evidence a::before {
+      content: '↗';
+      font-size: 11px;
+      color: var(--color-text-faint);
+      flex-shrink: 0;
+      margin-top: 1px;
     }
     .evidence a:hover {
-      text-decoration: underline;
+      background: var(--color-surface);
+      color: var(--color-link-hover);
     }
+    .evidence a:hover::before {
+      color: var(--color-link);
+    }
+
     .notice {
       padding: 10px 16px;
       font-size: 12px;
-      line-height: 1.5;
+      line-height: 1.55;
       border-top: 1px solid #fde68a;
       background: #fef3c7;
       color: #92400e;
@@ -90,34 +167,44 @@
     .notice:empty {
       display: none;
     }
+
     .footer {
-      padding: 10px 16px;
-      border-top: 1px solid #e5e7eb;
       display: flex;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
+      padding: 10px 16px;
+      border-top: 1px solid var(--color-border-soft);
+      background: var(--color-surface);
       font-size: 11px;
-      color: #6b7280;
+      color: var(--color-text-muted);
     }
     .footer button {
       font: inherit;
-      padding: 4px 10px;
-      background: #f3f4f6;
-      border: 1px solid #e5e7eb;
+      padding: 5px 12px;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
       border-radius: 6px;
-      color: #1f2937;
+      color: var(--color-text);
+      font-size: 12px;
+      font-weight: 500;
       cursor: pointer;
+      transition: background 0.1s, border-color 0.1s;
     }
     .footer button:hover:not(:disabled) {
-      background: #e5e7eb;
+      background: var(--color-surface);
+      border-color: #cbd5e1;
+    }
+    .footer button:active:not(:disabled) {
+      background: var(--color-border-soft);
     }
     .footer button:disabled {
-      opacity: 0.5;
+      opacity: 0.4;
       cursor: not-allowed;
     }
     .meta {
       margin-left: auto;
       font-variant-numeric: tabular-nums;
+      color: var(--color-text-faint);
     }
   </style>
 </head>

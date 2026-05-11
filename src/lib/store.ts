@@ -23,11 +23,20 @@ type StoredShape = {
   blacklist?: Cached<BlacklistEntry[]>;
 };
 
-export async function refreshLists(): Promise<void> {
+/**
+ * 화이트리스트·블랙리스트를 GitHub raw에서 fetch해 chrome.storage.local에 저장.
+ *
+ * @param bypassCdnCache true면 URL에 타임스탬프 query를 붙여 raw.githubusercontent.com의
+ *   CDN(Fastly) 캐시를 강제 우회. 사용자가 popup의 "새로고침" 버튼을 눌렀을 때처럼
+ *   즉시 반영이 필요한 경우에 사용. false(기본)이면 CDN 캐시를 정상 활용 — 자동 알람·
+ *   설치·브라우저 시작 시에는 이 모드로 호출해 GitHub에 부하를 덜 줌.
+ */
+export async function refreshLists(bypassCdnCache = false): Promise<void> {
   try {
+    const suffix = bypassCdnCache ? `?t=${Date.now()}` : '';
     const [wlRes, blRes] = await Promise.all([
-      fetch(WHITELIST_URL, { cache: 'no-cache' }),
-      fetch(BLACKLIST_URL, { cache: 'no-cache' }),
+      fetch(WHITELIST_URL + suffix, { cache: 'no-cache' }),
+      fetch(BLACKLIST_URL + suffix, { cache: 'no-cache' }),
     ]);
 
     if (!wlRes.ok) throw new Error(`whitelist fetch failed (${wlRes.status})`);

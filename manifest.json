@@ -3,13 +3,24 @@
   "name": "AI Domain Check",
   "version": "0.0.1",
   "description": "AI 도구 사이트의 공식/미확인/사칭 의심 여부를 즉시 표시하는 크롬 확장프로그램입니다.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "permissions": ["storage", "alarms", "tabs"],
   "host_permissions": [
     "https://raw.githubusercontent.com/ai-domain-check/ai-domain-check-list/*"
   ],
   "action": {
     "default_popup": "src/popup/popup.html",
-    "default_title": "AI Domain Check"
+    "default_title": "AI Domain Check",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png"
+    }
   },
   "background": {
     "service_worker": "dist/background/service-worker.js"

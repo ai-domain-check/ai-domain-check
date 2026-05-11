@@ -117,7 +117,8 @@ npm run type-check
 - [x] 배지 UI (content script + closed shadow DOM, official/suspicious만 표시)
 - [x] 상세 패널 (popup HTML + JS, 신고/새로고침 버튼, 증거 링크)
 - [x] 툴바 아이콘 색상 동기화 (OffscreenCanvas로 임시 원 아이콘, 4가지 상태)
-- [ ] 아이콘 디자인 (16/48/128 PNG, OffscreenCanvas 임시 아이콘 교체)
+- [x] 아이콘 (정적 브랜드 PNG 16/32/48/128 + 동적 per-tab OffscreenCanvas)
+- [ ] 정식 브랜드 디자인 (현재 PNG는 Python으로 생성한 플레이스홀더, Figma 디자인으로 교체 예정)
 - [ ] 사용자 신고 기능
 - [ ] Chrome Web Store 등록
 
