@@ -15,11 +15,16 @@ AI 도구 사이트에 접속할 때 화면 우측 상단에 "공식 / 미확인
 ## 작동 방식 (예정)
 
 1. 사용자가 AI 도구로 추정되는 사이트에 접속합니다.
-2. 확장프로그램이 현재 도메인을 공개 화이트리스트와 대조합니다.
+2. 확장프로그램이 현재 URL의 hostname과 pathname을 공개 화이트리스트와 대조합니다.
 3. 결과를 화면 우측 상단에 배지로 띄웁니다.
-   - 🟢 공식: 화이트리스트에 등록된 도메인
+   - 🟢 공식: 화이트리스트에 등록된 도메인 (필요 시 경로까지)
    - 🟡 미확인: 어디에도 등록되지 않은 도메인
    - 🔴 사칭 의심: 블랙리스트에 등록되었거나 사칭 패턴이 발견된 도메인
+
+화이트리스트는 두 가지 매칭 모드를 지원합니다.
+
+- **hostname-only** (기본): 전용 AI 도구 도메인용. 예: `chatgpt.com` → 모든 경로가 공식.
+- **hostname + paths**: 사용자 콘텐츠 호스팅 플랫폼 안의 특정 제품만 신뢰. 예: `github.com`은 `/features/copilot`, `/settings/copilot`만 녹색이고, 사용자 임의 레포(`github.com/anyone/repo`)는 미확인.
 
 화이트리스트는 별도의 GitHub 공개 저장소에서 운영하며, 누구나 PR로 추가·수정에 기여할 수 있도록 할 계획입니다.
 
@@ -108,11 +113,11 @@ npm run type-check
 
 - [x] 프로젝트 골격 (폴더 구조, manifest, README)
 - [x] 화이트리스트 저장소 분리 (`ai-domain-check-list`)
-- [ ] 도메인 판정 로직 (background service worker)
-- [ ] 배지 UI (content script + CSS, shadow DOM 격리)
-- [ ] 클릭 시 상세 패널 (popup)
-- [ ] 툴바 아이콘 색상 동기화 (status별 아이콘 교체)
-- [ ] 아이콘 디자인 (16/48/128)
+- [x] 도메인 판정 로직 (background service worker, fetch + 6시간 알람 + 메시지 핸들러)
+- [x] 배지 UI (content script + closed shadow DOM, official/suspicious만 표시)
+- [x] 상세 패널 (popup HTML + JS, 신고/새로고침 버튼, 증거 링크)
+- [x] 툴바 아이콘 색상 동기화 (OffscreenCanvas로 임시 원 아이콘, 4가지 상태)
+- [ ] 아이콘 디자인 (16/48/128 PNG, OffscreenCanvas 임시 아이콘 교체)
 - [ ] 사용자 신고 기능
 - [ ] Chrome Web Store 등록
 
