@@ -5,6 +5,8 @@ export type DomainStatus = 'official' | 'suspicious' | 'unverified';
 
 export type WhitelistCategory =
   | 'llm'
+  | 'search'
+  | 'translation'
   | 'image'
   | 'audio'
   | 'video'
