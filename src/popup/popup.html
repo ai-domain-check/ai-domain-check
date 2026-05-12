@@ -151,6 +151,26 @@
       color: var(--color-link);
     }
 
+    .action-link {
+      color: var(--color-link);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .action-link:hover {
+      color: var(--color-link-hover);
+      text-decoration: underline;
+    }
+    .action-link::after {
+      content: ' →';
+      font-size: 12px;
+      color: var(--color-text-faint);
+    }
+    .action-link:hover::after {
+      color: var(--color-link);
+    }
+
     .notice {
       padding: 10px 16px;
       font-size: 12px;

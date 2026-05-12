@@ -18,6 +18,7 @@ import type {
 const ISSUE_URL_BASE =
   'https://github.com/ai-domain-check/ai-domain-check-list/issues/new';
 const REPORT_TEMPLATE = 'domain-report.yml';
+const WHITELIST_TEMPLATE = 'whitelist-request.yml';
 
 const STATUS_LABELS: Record<DomainStatus | 'unsupported', string> = {
   official: '공식',
@@ -112,12 +113,20 @@ function buildBodyFor(result: StatusResult): HTMLElement[] {
     return rows;
   }
 
-  // unverified
+  // unverified — 안내 텍스트 + 공식 등록 요청 인라인 링크
   const note = makeRow(
     '안내',
     '화이트리스트와 블랙리스트 어디에도 등록되지 않은 도메인입니다. 결제·로그인 시 한 번 더 확인해주세요.',
   );
-  return [note];
+  const requestLink = makeActionRow(
+    '공식 사이트로 알고 계신가요?',
+    '화이트리스트 등록 요청',
+    () => {
+      const url = buildWhitelistRequestUrl();
+      void chrome.tabs.create({ url });
+    },
+  );
+  return [note, requestLink];
 }
 
 function noticeFor(status: DomainStatus): string {
@@ -194,6 +203,36 @@ function makeRow(label: string, value: string): HTMLElement {
   return row;
 }
 
+// 클릭 시 액션을 실행하는 인라인 링크가 있는 row. (예: "공식 등록 요청")
+function makeActionRow(
+  label: string,
+  linkText: string,
+  onClick: () => void,
+): HTMLElement {
+  const row = document.createElement('div');
+  row.className = 'row';
+
+  const lab = document.createElement('div');
+  lab.className = 'row-label';
+  lab.textContent = label;
+
+  const val = document.createElement('div');
+  val.className = 'row-value';
+
+  const link = document.createElement('a');
+  link.href = '#';
+  link.className = 'action-link';
+  link.textContent = linkText;
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    onClick();
+  });
+  val.appendChild(link);
+
+  row.append(lab, val);
+  return row;
+}
+
 // 카테고리·reasonCode처럼 enum 값을 깔끔하게 chip으로 표시.
 function makeChipRow(label: string, value: string): HTMLElement {
   const row = document.createElement('div');
@@ -265,17 +304,26 @@ function attachReportButton(hostname: string, status: DomainStatus): void {
 // GitHub Issue Template URL을 생성. domain 필드를 현재 탭의 전체 URL(경로 포함)로 prefill.
 // 사용자가 직접 폼을 작성하기 전에 도메인이 미리 채워져 있어 정확한 신고가 됩니다.
 function buildReportUrl(hostname: string): string {
-  let domainValue = hostname;
+  return buildTemplateUrl(REPORT_TEMPLATE, hostname);
+}
+
+// 미확인 상태에서 "공식 등록 요청"으로 화이트리스트 추가 요청 폼을 엽니다.
+function buildWhitelistRequestUrl(): string {
+  return buildTemplateUrl(WHITELIST_TEMPLATE, '');
+}
+
+function buildTemplateUrl(template: string, fallbackHostname: string): string {
+  let domainValue = fallbackHostname;
   try {
     // 현재 탭 URL이 유효하면 경로 포함 형태로 — query/hash는 제거(추적 파라미터·민감정보 우려)
     const u = new URL(currentTabUrl);
     domainValue = `${u.protocol}//${u.host}${u.pathname}`;
   } catch {
-    /* hostname-only로 fallback */
+    /* fallbackHostname 사용 */
   }
 
   const params = new URLSearchParams({
-    template: REPORT_TEMPLATE,
+    template,
     domain: domainValue,
   });
   return `${ISSUE_URL_BASE}?${params.toString()}`;
