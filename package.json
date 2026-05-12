@@ -1,6 +1,6 @@
 {
   "name": "ai-domain-check",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
   "description": "AI 도구 사이트의 공식/미확인/사칭 의심 여부를 표시하는 크롬 확장프로그램",
   "scripts": {
