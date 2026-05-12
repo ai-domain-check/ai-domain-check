@@ -55,9 +55,25 @@ const BADGE_STYLES = `
     display: inline-block;
     opacity: 0.9;
   }
-  .badge-official { background: #059669; }
-  .badge-suspicious { background: #dc2626; }
+  .badge-official {
+    background: #059669;
+    /* 공식 사이트는 잠깐만 확인 시켜주고 사라짐 — 콘텐츠를 가리지 않도록.
+       2.5초 노출 후 0.8초에 걸쳐 부드럽게 사라짐. 툴바 아이콘은 계속 녹색 유지. */
+    animation: aidc-fade-out 0.8s ease-out 2.5s forwards;
+  }
+  .badge-suspicious {
+    background: #dc2626;
+    /* 사칭 의심은 자동으로 사라지지 않음 — 사용자가 인지할 때까지 끈질기게 노출 */
+  }
   .badge-unverified { background: #d97706; }
+
+  @keyframes aidc-fade-out {
+    to {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+  }
 `;
 
 // 탑 프레임에서만 실행. iframe 내부에서는 스킵.
@@ -99,13 +115,16 @@ function injectBadge(result: StatusResult): void {
 
   const host = document.createElement('div');
   host.id = HOST_ID;
+  // 주의: 'all:initial'은 반드시 가장 먼저 와야 함.
+  // 뒤에 두면 이후 모든 속성을 초기값으로 reset해서 position:fixed가 풀려
+  // 배지가 viewport 우측 상단이 아니라 페이지 흐름 끝(보통 페이지 하단)에 떨어짐.
   host.style.cssText = [
+    'all:initial',
     'position:fixed',
     'top:16px',
     'right:16px',
     'z-index:2147483647',
     'pointer-events:none',
-    'all:initial',
   ].join(';');
 
   const shadow = host.attachShadow({ mode: 'closed' });
